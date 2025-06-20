@@ -59,8 +59,8 @@ func ReadFile(file string) *Excel {
 
 		for i := 0; i < fieldCount; i++ {
 			field := &Field{
-				Visible: getCell(rows, 0, i, ""), // 預設 "false"
-				Type:    getCell(rows, 1, i, ""), // 預設 "string"
+				Visible: getCell(rows, 0, i, ""),
+				Type:    getCell(rows, 1, i, ""),
 				Key:     getCell(rows, 2, i, ""),
 				Name:    getCell(rows, 3, i, ""),
 			}
