@@ -11,7 +11,7 @@ import (
 // the <icon src="AllIcons.Actions.Execute"/> icon in the gutter and select the <b>Run</b> menu item from here.</p>
 
 func main() {
-	f, err := excelize.OpenFile("stage.xlsx")
+	f, err := excelize.OpenFile("D:\\Project-Wotsv2\\wotsv2-client\\Assets\\ExcelExportMaker\\Excels\\GameData\\stage.xlsx")
 	if err != nil {
 		log.Fatal(err)
 	}
