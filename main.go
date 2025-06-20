@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -10,20 +11,58 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
+const YAML_File = "D:\\Project-Wotsv2\\wotsv2-server\\sheet\\sheet-gamedata.yaml"
+const EXCEL_File = "D:\\Project-Wotsv2\\wotsv2-client\\Assets\\ExcelExportMaker\\Excels\\GameData\\stage.xlsx"
+
 //TIP <p>To run your code, right-click the code and select <b>Run</b>.</p> <p>Alternatively, click
 // the <icon src="AllIcons.Actions.Execute"/> icon in the gutter and select the <b>Run</b> menu item from here.</p>
 
 func main() {
-	file := "D:\\Project-Wotsv2\\wotsv2-client\\Assets\\ExcelExportMaker\\Excels\\GameData\\stage.xlsx"
+	files := ReadYaml(YAML_File)
 
-	excel := ReadFile(file)
-
-	fmt.Printf("excel ==> %s\n", func() []byte {
-		jsonString, _ := json.MarshalIndent(excel, "", "    ")
+	fmt.Printf("file ==> %s\n", func() []byte {
+		jsonString, _ := json.MarshalIndent(files, "", "    ")
 		return jsonString
 	}())
 
-	ExportSchema(excel)
+	//
+	//excel := ReadFile(EXCEL_File)
+	//
+	//fmt.Printf("excel ==> %s\n", func() []byte {
+	//	jsonString, _ := json.MarshalIndent(excel, "", "    ")
+	//	return jsonString
+	//}())
+	//
+	//ExportSchema(excel)
+}
+
+func ReadYaml(file string) []string {
+	f, err := os.Open(file)
+
+	if err != nil {
+		panic(err)
+	}
+
+	defer f.Close()
+
+	scanner := bufio.NewScanner(f)
+
+	source := []string{}
+
+	for scanner.Scan() {
+		text := scanner.Text()
+		if text == "source:" {
+			// TODO: 下禮拜從這裡開始
+			// 讀取 yaml 檔來取得 excel 檔案清單
+			//scanner.
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		panic(err)
+	}
+
+	return nil
 }
 
 func ReadFile(file string) *Excel {
