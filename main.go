@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/xuri/excelize/v2"
 )
@@ -21,6 +22,8 @@ func main() {
 		jsonString, _ := json.MarshalIndent(excel, "", "    ")
 		return jsonString
 	}())
+
+	ExportSchema(excel)
 }
 
 func ReadFile(file string) *Excel {
@@ -30,7 +33,8 @@ func ReadFile(file string) *Excel {
 	}
 
 	excel := &Excel{
-		Name: file,
+		File: file,
+		Name: filepath.Base(file),
 	}
 
 	f, err := excelize.OpenFile(file)
@@ -57,7 +61,7 @@ func ReadFile(file string) *Excel {
 			Name: sheetName,
 		}
 
-		for i := 0; i < fieldCount; i++ {
+		for i := 1; i < fieldCount; i++ {
 			field := &Field{
 				Visible: getCell(rows, 0, i, ""),
 				Type:    getCell(rows, 1, i, ""),
@@ -73,6 +77,29 @@ func ReadFile(file string) *Excel {
 	return excel
 }
 
+func ExportSchema(excel *Excel) bool {
+	content := ""
+
+	content += fmt.Sprintf("%v\n", excel.Name)
+
+	for _, table := range excel.Tables {
+		content += fmt.Sprintf("    - %v\n", table.Name)
+		for _, field := range table.Fields {
+			if field.Visible == "Ignore" {
+				continue
+			}
+
+			content += fmt.Sprintf("        - %v (%v) - %v\n", field.Key, field.Type, field.Name)
+		}
+	}
+
+	err := os.WriteFile("output.txt", []byte(content), 0644)
+	if err != nil {
+		panic(err)
+	}
+	return true
+}
+
 func getCell(rows [][]string, row int, col int, defaultVal string) string {
 	if row < len(rows) && col < len(rows[row]) {
 		return rows[row][col]
@@ -82,6 +109,7 @@ func getCell(rows [][]string, row int, col int, defaultVal string) string {
 }
 
 type Excel struct {
+	File   string
 	Name   string
 	Tables []*Table
 }
