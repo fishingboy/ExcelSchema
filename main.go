@@ -41,13 +41,9 @@ func ReadFile(file string) *Excel {
 
 	defer f.Close()
 
-	fmt.Println("f.SheetCount", f.SheetCount)
-
 	for index := 0; index < f.SheetCount; index++ {
 		// 取得第一個工作表名稱
 		sheetName := f.GetSheetName(index)
-
-		fmt.Println("sheetName => ", sheetName)
 
 		// 讀取指定工作表所有資料
 		rows, err := f.GetRows(sheetName)
@@ -57,14 +53,6 @@ func ReadFile(file string) *Excel {
 		}
 
 		fieldCount := len(rows[0])
-
-		fmt.Printf("rows[0] ==> %s\n", func() []byte {
-			jsonString, _ := json.MarshalIndent(rows[0], "", "    ")
-			return jsonString
-		}())
-
-		fmt.Println("fieldCount => ", fieldCount)
-
 		table := &Table{
 			Name: sheetName,
 		}
@@ -76,11 +64,6 @@ func ReadFile(file string) *Excel {
 				Key:     getCell(rows, 2, i, ""),
 				Name:    getCell(rows, 3, i, ""),
 			}
-			fmt.Printf("field ==> %s\n", func() []byte {
-				jsonString, _ := json.MarshalIndent(field, "", "    ")
-				return jsonString
-			}())
-
 			table.Fields = append(table.Fields, field)
 		}
 
@@ -94,6 +77,7 @@ func getCell(rows [][]string, row int, col int, defaultVal string) string {
 	if row < len(rows) && col < len(rows[row]) {
 		return rows[row][col]
 	}
+
 	return defaultVal
 }
 
