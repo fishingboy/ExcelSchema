@@ -80,16 +80,16 @@ func ReadFile(file string) *Excel {
 func ExportSchema(excel *Excel) bool {
 	content := ""
 
-	content += fmt.Sprintf("%v\n", excel.Name)
+	content += fmt.Sprintf("[%v]\n", excel.Name)
 
 	for _, table := range excel.Tables {
-		content += fmt.Sprintf("    - %v\n", table.Name)
+		content += fmt.Sprintf("    - %v:\n", table.Name)
 		for _, field := range table.Fields {
 			if field.Visible == "Ignore" {
 				continue
 			}
 
-			content += fmt.Sprintf("        - %v (%v) - %v\n", field.Key, field.Type, field.Name)
+			content += fmt.Sprintf("        * %v (%v) - %v\n", field.Key, field.Type, field.Name)
 		}
 	}
 
