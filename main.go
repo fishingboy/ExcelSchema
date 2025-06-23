@@ -2,13 +2,13 @@ package main
 
 import (
 	"bufio"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/xuri/excelize/v2"
 )
@@ -25,41 +25,33 @@ var CoffeeExcelDir = []string{
 	"D:\\Project-CoffeeAgent\\coffeeagent-client\\Assets\\ExcelExportMaker\\Excels\\GameData",
 	"D:\\Project-CoffeeAgent\\coffeeagent-client\\Assets\\ExcelExportMaker\\Excels\\Localization",
 }
+var AcademyExcelDir = []string{
+	"D:\\Project-Academy\\Academy-client\\Sheet\\GameData",
+	"D:\\Project-Academy\\Academy-client\\Sheet\\Localization",
+}
+var ExcelDir = map[string][]string{
+	"Wotsv2":  Wotsv2ExcelDir,
+	"Coffee":  CoffeeExcelDir,
+	"Academy": AcademyExcelDir,
+}
 
 //TIP <p>To run your code, right-click the code and select <b>Run</b>.</p> <p>Alternatively, click
 // the <icon src="AllIcons.Actions.Execute"/> icon in the gutter and select the <b>Run</b> menu item from here.</p>
 
 func main() {
-	// yaml1 := ReadYaml(YAML_File1)
-	// yaml2 = ReadYaml(YAML_File2)
+	for project, itor := range ExcelDir {
+		excel := []*Excel{}
 
-	excel := []*Excel{}
-
-	for _, dir := range Wotsv2ExcelDir {
-		files := FindExcel(dir)
-		for _, file := range files {
-			excel = append(excel, ReadFile(file))
+		for _, dir := range itor {
+			files := FindExcel(dir)
+			for _, file := range files {
+				excel = append(excel, ReadFile(file))
+			}
 		}
+
+		today := time.Now().Format("2006-01-02")
+		ExportSchema(fmt.Sprintf("Export/%v-sheet-schema(%v).txt", project, today), excel...)
 	}
-
-	fmt.Printf("excel[0] ==> %s\n", func() []byte {
-		jsonString, _ := json.MarshalIndent(excel[0], "", "    ")
-		return jsonString
-	}())
-
-	ExportSchema("../wotsv2-sheet-schema.txt", excel...)
-
-	excel = []*Excel{}
-
-	for _, dir := range CoffeeExcelDir {
-		files := FindExcel(dir)
-		for _, file := range files {
-			excel = append(excel, ReadFile(file))
-		}
-	}
-
-	ExportSchema("../coffee-sheet-schema.txt", excel...)
-
 }
 
 func ReadYaml(file string) map[string][]string {
