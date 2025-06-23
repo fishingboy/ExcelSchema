@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -113,6 +114,8 @@ func FindExcel(dir string) []string {
 			result = append(result, dir+"\\"+file.Name())
 		}
 	}
+
+	sort.Strings(result)
 
 	return result
 }
