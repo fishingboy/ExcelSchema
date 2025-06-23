@@ -7,36 +7,62 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 
 	"github.com/xuri/excelize/v2"
 )
 
-const YAML_File = "D:\\Project-Wotsv2\\wotsv2-server\\sheet\\sheet-gamedata.yaml"
-const EXCEL_File = "D:\\Project-Wotsv2\\wotsv2-client\\Assets\\ExcelExportMaker\\Excels\\GameData\\stage.xlsx"
+var Wotsv2YamlFiles = []string{
+	"D:\\Project-Wotsv2\\wotsv2-server\\sheet\\sheet-gamedata.yaml",
+	"D:\\Project-Wotsv2\\wotsv2-server\\sheet\\sheet-localization.yaml",
+}
+var Wotsv2ExcelDir = []string{
+	"D:\\Project-Wotsv2\\wotsv2-client\\Assets\\ExcelExportMaker\\Excels\\GameData",
+	"D:\\Project-Wotsv2\\wotsv2-client\\Assets\\ExcelExportMaker\\Excels\\Localization",
+}
+var CoffeeExcelDir = []string{
+	"D:\\Project-CoffeeAgent\\coffeeagent-client\\Assets\\ExcelExportMaker\\Excels\\GameData",
+	"D:\\Project-CoffeeAgent\\coffeeagent-client\\Assets\\ExcelExportMaker\\Excels\\Localization",
+}
 
 //TIP <p>To run your code, right-click the code and select <b>Run</b>.</p> <p>Alternatively, click
 // the <icon src="AllIcons.Actions.Execute"/> icon in the gutter and select the <b>Run</b> menu item from here.</p>
 
 func main() {
-	files := ReadYaml(YAML_File)
+	// yaml1 := ReadYaml(YAML_File1)
+	// yaml2 = ReadYaml(YAML_File2)
 
-	fmt.Printf("file ==> %s\n", func() []byte {
-		jsonString, _ := json.MarshalIndent(files, "", "    ")
+	excel := []*Excel{}
+
+	for _, dir := range Wotsv2ExcelDir {
+		files := FindExcel(dir)
+		for _, file := range files {
+			excel = append(excel, ReadFile(file))
+		}
+	}
+
+	fmt.Printf("excel[0] ==> %s\n", func() []byte {
+		jsonString, _ := json.MarshalIndent(excel[0], "", "    ")
 		return jsonString
 	}())
 
-	//
-	//excel := ReadFile(EXCEL_File)
-	//
-	//fmt.Printf("excel ==> %s\n", func() []byte {
-	//	jsonString, _ := json.MarshalIndent(excel, "", "    ")
-	//	return jsonString
-	//}())
-	//
-	//ExportSchema(excel)
+	ExportSchema("wotsv2-sheet-schema.txt", excel...)
+
+	excel = []*Excel{}
+
+	for _, dir := range CoffeeExcelDir {
+		files := FindExcel(dir)
+		for _, file := range files {
+			excel = append(excel, ReadFile(file))
+		}
+	}
+
+	ExportSchema("coffee-sheet-schema.txt", excel...)
+
 }
 
-func ReadYaml(file string) []string {
+func ReadYaml(file string) map[string][]string {
 	f, err := os.Open(file)
 
 	if err != nil {
@@ -47,22 +73,51 @@ func ReadYaml(file string) []string {
 
 	scanner := bufio.NewScanner(f)
 
-	source := []string{}
+	yaml := map[string][]string{}
+	key := ""
 
 	for scanner.Scan() {
 		text := scanner.Text()
-		if text == "source:" {
-			// TODO: 下禮拜從這裡開始
-			// 讀取 yaml 檔來取得 excel 檔案清單
-			//scanner.
+		re1 := regexp.MustCompile("([a-zA-z]+):$")
+		re2 := regexp.MustCompile("^.*:.*$")
+
+		if re1.MatchString(text) {
+			match := re1.FindStringSubmatch(text)
+			key = match[1]
+		} else if re2.MatchString(text) {
+			parts := strings.Split(text, ":")
+			yaml[parts[0]] = []string{strings.TrimSpace(parts[1])}
+		} else {
+			text = strings.TrimPrefix(text, "  - ")
+			yaml[key] = append(yaml[key], text)
 		}
 	}
 
-	if err := scanner.Err(); err != nil {
+	if err = scanner.Err(); err != nil {
 		panic(err)
 	}
 
-	return nil
+	return yaml
+}
+
+func FindExcel(dir string) []string {
+	files, err := os.ReadDir(dir)
+
+	if err != nil {
+		return nil
+	}
+
+	var result []string
+
+	for _, file := range files {
+		if !file.IsDir() &&
+			strings.HasSuffix(file.Name(), ".xlsx") &&
+			strings.HasPrefix(file.Name(), "~") == false {
+			result = append(result, dir+"\\"+file.Name())
+		}
+	}
+
+	return result
 }
 
 func ReadFile(file string) *Excel {
@@ -72,6 +127,7 @@ func ReadFile(file string) *Excel {
 	}
 
 	excel := &Excel{
+		Dir:  filepath.Base(filepath.Dir(file)),
 		File: file,
 		Name: filepath.Base(file),
 	}
@@ -116,26 +172,32 @@ func ReadFile(file string) *Excel {
 	return excel
 }
 
-func ExportSchema(excel *Excel) bool {
+func ExportSchema(exportFile string, excel ...*Excel) bool {
 	content := ""
 
-	content += fmt.Sprintf("[%v]\n", excel.Name)
+	for _, itor := range excel {
+		content += fmt.Sprintf("[%v/%v]\n", itor.Dir, itor.Name)
 
-	for _, table := range excel.Tables {
-		content += fmt.Sprintf("    - %v:\n", table.Name)
-		for _, field := range table.Fields {
-			if field.Visible == "Ignore" {
-				continue
+		for _, table := range itor.Tables {
+			content += fmt.Sprintf("    - %v:\n", table.Name)
+
+			for _, field := range table.Fields {
+				if field.Visible == "Ignore" || field.Key == "" {
+					//content += fmt.Sprintf("          (ignore) %v (%v) - %v\n", field.Key, field.Type, field.Name)
+					continue
+				}
+
+				content += fmt.Sprintf("        * %v (%v) - %v\n", field.Key, field.Type, field.Name)
 			}
-
-			content += fmt.Sprintf("        * %v (%v) - %v\n", field.Key, field.Type, field.Name)
 		}
 	}
 
-	err := os.WriteFile("output.txt", []byte(content), 0644)
+	err := os.WriteFile(exportFile, []byte(content), 0644)
+
 	if err != nil {
 		panic(err)
 	}
+
 	return true
 }
 
@@ -148,6 +210,7 @@ func getCell(rows [][]string, row int, col int, defaultVal string) string {
 }
 
 type Excel struct {
+	Dir    string
 	File   string
 	Name   string
 	Tables []*Table
