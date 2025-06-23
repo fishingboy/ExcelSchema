@@ -187,7 +187,7 @@ func ExportSchema(exportFile string, excel ...*Excel) bool {
 					continue
 				}
 
-				content += fmt.Sprintf("        * %v (%v) - %v\n", field.Key, field.Type, field.Name)
+				content += fmt.Sprintf("        * %v (%v) - %v (%v)\n", field.Key, field.Type, field.Name, field.Visible)
 			}
 		}
 	}
