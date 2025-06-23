@@ -47,7 +47,7 @@ func main() {
 		return jsonString
 	}())
 
-	ExportSchema("wotsv2-sheet-schema.txt", excel...)
+	ExportSchema("../wotsv2-sheet-schema.txt", excel...)
 
 	excel = []*Excel{}
 
@@ -58,7 +58,7 @@ func main() {
 		}
 	}
 
-	ExportSchema("coffee-sheet-schema.txt", excel...)
+	ExportSchema("../coffee-sheet-schema.txt", excel...)
 
 }
 
