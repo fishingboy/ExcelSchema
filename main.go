@@ -39,6 +39,8 @@ var ExcelDir = map[string][]string{
 // the <icon src="AllIcons.Actions.Execute"/> icon in the gutter and select the <b>Run</b> menu item from here.</p>
 
 func main() {
+	start := time.Now() // 記錄開始時間
+
 	for project, itor := range ExcelDir {
 		excel := []*Excel{}
 
@@ -52,6 +54,9 @@ func main() {
 		today := time.Now().Format("2006-01-02")
 		ExportSchema(fmt.Sprintf("Export/%v-sheet-schema(%v).txt", project, today), excel...)
 	}
+
+	duration := time.Since(start) // 計算耗時
+	fmt.Printf("匯出 Excel Schema 完成，耗時：%v\n", duration)
 }
 
 func ReadYaml(file string) map[string][]string {
